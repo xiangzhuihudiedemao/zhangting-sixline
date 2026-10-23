@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#f7f8fa" />
+<title>涨停六线计算器</title>
+<style>
+  :root{
+    --ink:#15161a;
+    --muted:#8a8f99;
+    --line:#f1f2f5;
+    --red:#d92b2b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;
+    min-height:100vh;
+    padding:26px 16px 36px;
+    background:
+      radial-gradient(900px 420px at 50% -140px, #ffe9e6 0%, rgba(255,233,230,0) 70%),
+      linear-gradient(180deg,#f7f8fa 0%,#eceef2 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .card{
+    width:100%;
+    max-width:460px;
+    margin:0 auto;
+    background:#fff;
+    border-radius:22px;
+    padding:24px 18px 16px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 14px 34px -14px rgba(16,24,40,.22);
+  }
+  .card::before{
+    content:"";
+    position:absolute;left:0;right:0;top:0;height:3px;
+    background:linear-gradient(90deg,#ff9a8c,#d92b2b 55%,#8f1111);
+  }
+
+  .tag{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;letter-spacing:.4px;
+    color:#c23636;background:#fff1f0;border:1px solid #ffe1de;
+    padding:3px 10px;border-radius:999px;
+  }
+  .tag i{width:5px;height:5px;border-radius:50%;background:#e0483f;display:block}
+
+  h1{font-size:22px;margin:12px 0 6px;letter-spacing:-.3px;font-weight:700}
+  .sub{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 20px}
+
+  .label{
+    display:block;font-size:11px;font-weight:600;letter-spacing:1px;
+    color:#9aa0aa;margin-bottom:8px;text-transform:uppercase;
+  }
+  .field{
+    display:flex;align-items:center;gap:8px;
+    background:#f7f8fa;border:1.5px solid #e8eaee;border-radius:14px;
+    padding:9px 14px;
+    transition:border-color .18s,box-shadow .18s,background .18s;
+  }
+  .field:focus-within{
+    border-color:#e0605a;background:#fff;
+    box-shadow:0 0 0 4px rgba(217,43,43,.08);
+  }
+  .cur{font-size:19px;font-weight:600;color:#b6bac2;flex:none;line-height:1}
+  #price{
+    flex:1;min-width:0;
+    border:0;outline:none;background:transparent;
+    font-family:inherit;font-size:28px;font-weight:700;letter-spacing:.4px;
+    color:var(--ink);padding:2px 0;
+    font-variant-numeric:tabular-nums;
+  }
+  #price::placeholder{color:#c9cdd4;font-weight:600}
+  .unit{font-size:13px;color:#b6bac2;flex:none}
+
+  .list{margin:18px 0 14px;border-top:1px solid var(--line)}
+  .row{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 8px 12px 4px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;border-radius:8px;
+    transition:background .15s;
+  }
+  .row:hover{background:#fafbfc}
+  .row:active{background:#f3f5f8}
+  .row:last-child{
+    background:linear-gradient(90deg,#fff6f5,rgba(255,246,245,0));
+    border-radius:10px;
+  }
+  .row:last-child:hover{background:linear-gradient(90deg,#ffeceb,rgba(255,236,235,0))}
+
+  .bar{width:4px;height:30px;border-radius:3px;background:var(--c);flex:none}
+  .info{flex:1;min-width:0;display:flex;align-items:center;gap:9px}
+  .name{font-size:15px;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rate{
+    flex:none;font-size:11px;font-weight:700;color:var(--c);
+    background:#fdf1f0;padding:2px 6px;border-radius:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .val{flex:none;text-align:right;min-width:92px}
+  .target{
+    font-size:23px;font-weight:700;line-height:1.15;letter-spacing:-.2px;
+    color:var(--c);font-variant-numeric:tabular-nums;
+  }
+  .delta{
+    font-size:11px;color:#a2a7b0;margin-top:3px;
+    font-variant-numeric:tabular-nums;letter-spacing:.2px;
+  }
+  .pop{animation:pop .3s cubic-bezier(.2,.8,.3,1)}
+  @keyframes pop{
+    0%{transform:translateY(3px);opacity:.35}
+    100%{transform:translateY(0);opacity:1}
+  }
+
+  .copyBtn{
+    width:100%;height:52px;border:0;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.3px;
+    color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,#e5433a 0%,#c02222 55%,#a81717 100%);
+    box-shadow:0 10px 22px -10px rgba(184,29,29,.75);
+    transition:transform .12s,box-shadow .2s,background .2s;
+  }
+  .copyBtn:hover{box-shadow:0 12px 26px -10px rgba(184,29,29,.85)}
+  .copyBtn:active{transform:scale(.985)}
+  .copyBtn:disabled{
+    background:#dcdfe4;color:#fff;cursor:not-allowed;
+    box-shadow:none;opacity:.85;
+  }
+  .copyBtn svg{width:16px;height:16px;flex:none}
+
+  .foot{
+    margin:12px 0 0;text-align:center;
+    font-size:11px;line-height:1.7;color:#a8adb6;
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:34px;z-index:99;
+    transform:translate(-50%,14px);
+    background:rgba(21,22,26,.9);color:#fff;
+    font-size:13px;padding:10px 20px;border-radius:999px;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;
+    backdrop-filter:blur(8px);
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:380px){
+    #price{font-size:25px}
+    .target{font-size:21px}
+    .val{min-width:84px}
+  }
+</style>
+</head>
+<body>
+
+<main class="card">
+  <span class="tag"><i></i>A股打板 · 六档目标价</span>
+  <h1>涨停六线计算器</h1>
+  <p class="sub">只需输入昨日收盘价，自动算出六条涨幅线对应的目标价。</p>
+
+  <label class="label" for="price">昨日收盘价</label>
+  <div class="field">
+    <span class="cur">¥</span>
+    <input id="price" type="text" inputmode="decimal" placeholder="0.00"
+           autocomplete="off" spellcheck="false" enterkeyhint="done" />
+    <span class="unit">元</span>
+  </div>
+
+  <section class="list" id="lines" aria-live="polite"></section>
+
+  <button class="copyBtn" id="copyAll" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    <span id="copyLabel">一键复制全部目标价</span>
+  </button>
+
+  <p class="foot">算法：昨日收盘价 × (1 + 涨幅)，四舍五入保留两位小数<br>点击任意一行可单独复制该档目标价</p>
+</main>
+
+<div class="toast" id="toast">已复制</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var LINES = [
+    { name: "开盘小中分", rate: 2.16,  color: "hsl(356,78%,58%)" },
+    { name: "涨停基因线", rate: 4.32,  color: "hsl(356,78%,54%)" },
+    { name: "上跳平台线", rate: 5.73,  color: "hsl(356,78%,50%)" },
+    { name: "当日飙板线", rate: 7.14,  color: "hsl(356,79%,46%)" },
+    { name: "冲板龙门线", rate: 8.57,  color: "hsl(356,80%,41%)" },
+    { name: "涨停线",     rate: 10.00, color: "hsl(356,82%,35%)" }
+  ];
+
+  var input     = document.getElementById("price");
+  var listBox   = document.getElementById("lines");
+  var copyBtn   = document.getElementById("copyAll");
+  var copyLabel = document.getElementById("copyLabel");
+  var toastEl   = document.getElementById("toast");
+
+  var current = null;   // 有效的昨收价
+  var rows = [];        // 每行的 DOM 引用
+  var lastText = {};    // 避免无变化时重复播放动画
+
+  /* ---------- 构建六行 ---------- */
+  LINES.forEach(function (item) {
+    var row = document.createElement("div");
+    row.className = "row";
+    row.style.setProperty("--c", item.color);
+
+    var bar = document.createElement("div");
+    bar.className = "bar";
+
+    var info = document.createElement("div");
+    info.className = "info";
+    var nameEl = document.createElement("div");
+    nameEl.className = "name";
+    nameEl.textContent = item.name;
+    var rateEl = document.createElement("div");
+    rateEl.className = "rate";
+    rateEl.textContent = "+" + item.rate.toFixed(2) + "%";
+    info.appendChild(nameEl);
+    info.appendChild(rateEl);
+
+    var val = document.createElement("div");
+    val.className = "val";
+    var targetEl = document.createElement("div");
+    targetEl.className = "target";
+    targetEl.textContent = "--";
+    var deltaEl = document.createElement("div");
+    deltaEl.className = "delta";
+    deltaEl.textContent = "--";
+    val.appendChild(targetEl);
+    val.appendChild(deltaEl);
+
+    row.appendChild(bar);
+    row.appendChild(info);
+    row.appendChild(val);
+
+    row.addEventListener("click", function () {
+      if (current === null) { input.focus(); return; }
+      var price = targetOf(current, item.rate);
+      copyText(fmt(price)).then(function (ok) {
+        toast(ok ? item.name + " " + fmt(price) + " 已复制" : "复制失败，请手动选择");
+      });
+    });
+
+    listBox.appendChild(row);
+    rows.push({ targetEl: targetEl, deltaEl: deltaEl, rate: item.rate });
+  });
+
+  /* ---------- 计算 ---------- */
+  // 以“分”为单位做整数运算，避免浮点误差
+  function targetOf(price, rate) {
+    var cents = Math.round(price * 100);
+    return Math.round(cents * (1 + rate / 100)) / 100;
+  }
+  function fmt(num) { return num.toFixed(2); }
+
+  /* ---------- 渲染 ---------- */
+  function render() {
+    var raw = input.value.trim();
+    var price = parseFloat(raw);
+    var valid = raw !== "" && !isNaN(price) && price > 0;
+
+    current = valid ? price : null;
+    copyBtn.disabled = !valid;
+
+    rows.forEach(function (r, i) {
+      var t = valid ? targetOf(current, r.rate) : null;
+      var tv = valid ? fmt(t) : "--";
+      var dv = valid ? "+" + fmt(t - current) : "--";
+
+      if (lastText[i + "t"] !== tv) {
+        r.targetEl.textContent = tv;
+        r.deltaEl.textContent = dv;
+        if (valid) {
+          r.targetEl.classList.remove("pop");
+          void r.targetEl.offsetWidth;
+          r.targetEl.classList.add("pop");
+        }
+      } else {
+        r.deltaEl.textContent = dv;
+      }
+      lastText[i + "t"] = tv;
+    });
+  }
+
+  /* ---------- 输入过滤：仅数字，最多两位小数 ---------- */
+  input.addEventListener("input", function () {
+    var v = input.value.replace(/[^\d.]/g, "");
+    var dot = v.indexOf(".");
+    if (dot !== -1) {
+      v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+      var parts = v.split(".");
+      v = parts[0] + "." + parts[1].slice(0, 2);
+    }
+    // 不允许前导多个 0（保留 0.xx）
+    if (/^0\d/.test(v)) v = v.replace(/^0+/, "0");
+    if (v.charAt(0) === ".") v = "0" + v;
+    if (v !== input.value) input.value = v;
+    render();
+  });
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      input.blur();
+      if (current !== null) copyAll();
+    }
+  });
+
+  /* ---------- 复制 ---------- */
+  function copyText(text) {
+    // Android 壳里页面是 file:// 协议，不属于安全上下文，优先走原生剪贴板
+    if (window.AndroidBridge && typeof window.AndroidBridge.copy === "function") {
+      try {
+        if (window.AndroidBridge.copy(text)) return Promise.resolve(true);
+      } catch (err) { /* 继续尝试网页方案 */ }
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; })
+        .catch(function () { return fallbackCopy(text); });
+    }
+    return Promise.resolve(fallbackCopy(text));
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function buildAllText() {
+    if (current === null) return "";
+    var out = ["昨收 " + fmt(current) + " 元"];
+    LINES.forEach(function (item) {
+      out.push(item.name + " " + item.rate.toFixed(2) + "% → " + fmt(targetOf(current, item.rate)));
+    });
+    return out.join("\n");
+  }
+
+  function copyAll() {
+    var text = buildAllText();
+    if (!text) return;
+    copyText(text).then(function (ok) {
+      if (ok) {
+        copyLabel.textContent = "已复制 ✓";
+        copyBtn.disabled = true;
+        setTimeout(function () {
+          copyLabel.textContent = "一键复制全部目标价";
+          copyBtn.disabled = current === null;
+        }, 1600);
+        toast("六档目标价已复制");
+      } else {
+        toast("复制失败，请长按选择");
+      }
+    });
+  }
+
+  copyBtn.addEventListener("click", copyAll);
+
+  /* ---------- Toast ---------- */
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove("show");
+    }, 1800);
+  }
+
+  render();
+  // 桌面端默认聚焦；移动端不自动弹键盘
+  if (window.innerWidth > 768) input.focus();
+})();
+</script>
+</body>
+</html>
