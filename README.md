@@ -14,6 +14,9 @@
 | `dist/涨停六线计算器-v1.0.apk` | 正式签名版，直接装 |
 | `dist/zhangting-sixline-v1.0.apk` | 同一文件，英文名备份 |
 
+- 在线下载（手机点开即可）：<https://github.com/xiangzhuihudiedemao/zhangting-sixline/releases/latest>
+- 仓库只放源码，APK 通过 Releases 分发
+
 - 包名 `com.zhangting.sixline`，版本 `1.0 (1)`
 - SHA-256：`698556CB0BDA8D131087FAB4B5C69A5B94C7D8115C9AB90E8EC7B5FD312FB332`
 - 签名：`keystore/zhangting.jks`（alias `zhangting`，密码见 `keystore/README.txt`）
